@@ -21,33 +21,37 @@ export const getTransactionsPaginated = ({
   page,
 }: PaginatedRequestParams): PaginatedResponse<Transaction[]> => {
   if (page === null) {
-    throw new Error("Page cannot be null")
+    throw new Error("Page cannot be null");
   }
 
-  const start = page * TRANSACTIONS_PER_PAGE
-  const end = start + TRANSACTIONS_PER_PAGE
+  const start = page * TRANSACTIONS_PER_PAGE;
+  const end = start + TRANSACTIONS_PER_PAGE;
 
   if (start > data.transactions.length) {
-    throw new Error(`Invalid page ${page}`)
+    throw new Error(`Invalid page ${page}`);
   }
 
-  const nextPage = end < data.transactions.length ? page + 1 : null
+  const nextPage = end < data.transactions.length ? page + 1 : null;
+
+  /* Combine existing transactions with new transactions <----ADDED */
+  const newData = page === 0 ? data.transactions.slice(start, end) : [...data.transactions, ...data.transactions.slice(start, end)]; // <----ADDED
 
   return {
     nextPage,
-    data: data.transactions.slice(start, end),
-  }
-}
+    data: newData, // ADDED
+  };
+};
 
 export const getTransactionsByEmployee = ({ employeeId }: RequestByEmployeeParams) => {
   if (!employeeId) {
-    throw new Error("Employee id cannot be empty")
+    return data.transactions /* ADDED */
+    /* throw new Error("Employee id cannot be empty")  <----REMOVED */
   }
 
   return data.transactions.filter((transaction) => transaction.employee.id === employeeId)
 }
 
-export const setTransactionApproval = ({ transactionId, value }: SetTransactionApprovalParams): void => {
+export const setTransactionApproval = ({ transactionId, newValue }: SetTransactionApprovalParams): void => { // CHANGED to use newValue instead of value
   const transaction = data.transactions.find(
     (currentTransaction) => currentTransaction.id === transactionId
   )
@@ -56,5 +60,5 @@ export const setTransactionApproval = ({ transactionId, value }: SetTransactionA
     throw new Error("Invalid transaction to approve")
   }
 
-  transaction.approved = value
+  transaction.approved = newValue // CHANGED to use newValue instead of value
 }

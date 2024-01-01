@@ -28,5 +28,6 @@ export type RequestByEmployeeParams = {
 
 export type SetTransactionApprovalParams = {
   transactionId: string
-  value: boolean
+  //value: boolean // REMOVED value
+  newValue: boolean // ADDED new property
 }

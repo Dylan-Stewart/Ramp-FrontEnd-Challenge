@@ -1,13 +1,16 @@
-import { useState } from "react"
-import { InputCheckbox } from "../InputCheckbox"
-import { TransactionPaneComponent } from "./types"
+import React, { useState } from "react";
+import { InputCheckbox } from "../InputCheckbox";
+import { SetTransactionApprovalFunction } from "./types"; // CHANGED moved Transaction import down
+import { Transaction } from "src/utils/types"; // ADDED incorrectly imported
 
-export const TransactionPane: TransactionPaneComponent = ({
-  transaction,
-  loading,
-  setTransactionApproval: consumerSetTransactionApproval,
-}) => {
-  const [approved, setApproved] = useState(transaction.approved)
+export const TransactionPane: React.FC<{
+  transaction: Transaction;
+  loading: boolean;
+  isChecked: boolean; // ADDED receives the initial checkbox state
+  setTransactionApproval: SetTransactionApprovalFunction;
+  updateCheckboxState: (id: string, value: boolean) => void;
+}> = ({ transaction, loading, isChecked, setTransactionApproval, updateCheckboxState }) => {
+  const [approved, setApproved] = useState(isChecked); // CHANGED initial state value
 
   return (
     <div className="RampPane">
@@ -23,19 +26,20 @@ export const TransactionPane: TransactionPaneComponent = ({
         checked={approved}
         disabled={loading}
         onChange={async (newValue) => {
-          await consumerSetTransactionApproval({
+          await setTransactionApproval({ // CHANGED to use newValue instead of value
             transactionId: transaction.id,
             newValue,
-          })
+          });
 
-          setApproved(newValue)
+          setApproved(newValue); // CHANGED update state when checkbox changes
+          updateCheckboxState(transaction.id, newValue);
         }}
       />
     </div>
-  )
-}
+  );
+};
 
 const moneyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
-})
+});

@@ -12,36 +12,42 @@ export function App() {
   const { data: employees, ...employeeUtils } = useEmployees()
   const { data: paginatedTransactions, ...paginatedTransactionsUtils } = usePaginatedTransactions()
   const { data: transactionsByEmployee, ...transactionsByEmployeeUtils } = useTransactionsByEmployee()
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFilteredByEmployee, setIsFilteredByEmployee] = useState(false); // new state <-----ADDED
 
   const transactions = useMemo(
     () => paginatedTransactions?.data ?? transactionsByEmployee ?? null,
     [paginatedTransactions, transactionsByEmployee]
-  )
+  );
 
   const loadAllTransactions = useCallback(async () => {
-    setIsLoading(true)
-    transactionsByEmployeeUtils.invalidateData()
+    setIsLoading(true);
+    transactionsByEmployeeUtils.invalidateData();
 
-    await employeeUtils.fetchAll()
-    await paginatedTransactionsUtils.fetchAll()
+    // Set the state to indicate transactions are not filtered by employee
+    setIsFilteredByEmployee(false); // <-----ADDED
 
-    setIsLoading(false)
-  }, [employeeUtils, paginatedTransactionsUtils, transactionsByEmployeeUtils])
+    await employeeUtils.fetchAll();
+    await paginatedTransactionsUtils.fetchAll();
+
+    setIsLoading(false);
+  }, [employeeUtils, paginatedTransactionsUtils, transactionsByEmployeeUtils]);
 
   const loadTransactionsByEmployee = useCallback(
     async (employeeId: string) => {
-      paginatedTransactionsUtils.invalidateData()
-      await transactionsByEmployeeUtils.fetchById(employeeId)
+      paginatedTransactionsUtils.invalidateData();
+      await transactionsByEmployeeUtils.fetchById(employeeId);
+      // Set the state to indicate transactions are filtered by employee
+      setIsFilteredByEmployee(true); // <-----ADDED
     },
     [paginatedTransactionsUtils, transactionsByEmployeeUtils]
-  )
+  );
 
   useEffect(() => {
     if (employees === null && !employeeUtils.loading) {
-      loadAllTransactions()
+      loadAllTransactions();
     }
-  }, [employeeUtils.loading, employees, loadAllTransactions])
+  }, [employeeUtils.loading, employees, loadAllTransactions]);
 
   return (
     <Fragment>
@@ -74,12 +80,13 @@ export function App() {
         <div className="RampGrid">
           <Transactions transactions={transactions} />
 
-          {transactions !== null && (
+          {/* Conditionally show the View More button */}
+          {transactions !== null && !isFilteredByEmployee && ( // <-----CHANGED
             <button
               className="RampButton"
-              disabled={paginatedTransactionsUtils.loading}
+              disabled={paginatedTransactionsUtils.loading || paginatedTransactions?.nextPage === null}
               onClick={async () => {
-                await loadAllTransactions()
+                await loadAllTransactions();
               }}
             >
               View More
@@ -88,5 +95,5 @@ export function App() {
         </div>
       </main>
     </Fragment>
-  )
+  );
 }
